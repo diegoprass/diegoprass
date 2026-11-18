@@ -24,7 +24,8 @@ jobs:
       - name: Gerar contribuições, estatísticas e projetos
         run: node scripts/code-graph.mjs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GH_PAT (opcional): token pessoal seu; faz o card enxergar também as contribuições privadas
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
           REPOS: skills,Ia-coding-toolkit,framework-5p
           # stack real exibida no card de linguagens (% aproximada; apague a linha para voltar ao cálculo automático)
