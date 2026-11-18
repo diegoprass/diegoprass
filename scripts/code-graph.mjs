@@ -160,7 +160,7 @@ export function langsCard(langs, t) {
   });
   if (!top.length) legend = `<text x="20" y="130" style="font-size:13px;fill:${t.muted}">// nenhuma linguagem encontrada ainda</text>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${CSS(t)}${frame(W, H, "linguagens.json", t)}
-<text x="20" y="62" class="l" style="font-size:13px"><tspan fill="${t.accent}">$</tspan><tspan fill="${t.text}"> linguist </tspan><tspan fill="${t.orange}">--top 6</tspan></text>
+<text x="20" y="62" class="l" style="font-size:13px"><tspan fill="${t.accent}">$</tspan><tspan fill="${t.text}"> linguist </tspan><tspan fill="${t.orange}">${langs.fixas ? "--stack" : "--top 6"}</tspan></text>
 <clipPath id="bc"><rect x="20" y="78" width="${BW}" height="10" rx="5"/></clipPath><g clip-path="url(#bc)">${bar}</g>${legend}</svg>`;
 }
 
@@ -267,7 +267,14 @@ async function main() {
     langMap[e.node.name] ??= { name: e.node.name, color: e.node.color, size: 0 };
     langMap[e.node.name].size += e.size;
   }
-  const langs = Object.values(langMap).sort((a, b) => b.size - a.size);
+  // LANGS fixa o card com a stack real (útil quando o código principal é privado).
+  // Formato: "Java:45,Groovy:25,JavaScript:15"  — cores do GitHub Linguist quando conhecidas.
+  const CORES = { Java: "#b07219", Groovy: "#4298b8", JavaScript: "#f1e05a", TypeScript: "#3178c6", "PL/SQL": "#dad8d8",
+    PLSQL: "#dad8d8", HTML: "#e34c26", CSS: "#563d7c", Python: "#3572A5", Kotlin: "#A97BFF", PHP: "#4F5D95" };
+  const fixas = (process.env.LANGS || "").split(",").map((x) => x.trim()).filter(Boolean)
+    .map((x) => { const [name, size] = x.split(":"); return { name: name.trim(), color: CORES[name.trim()], size: Number(size) || 1 }; });
+  const langs = fixas.length ? fixas : Object.values(langMap).sort((a, b) => b.size - a.size);
+  if (fixas.length) langs.fixas = true;
   const stats = {
     year: new Date().getFullYear(),
     commits: cc.totalCommitContributions + cc.restrictedContributionsCount,

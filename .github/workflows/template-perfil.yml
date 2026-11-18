@@ -27,6 +27,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
           REPOS: skills,Ia-coding-toolkit,framework-5p
+          # stack real exibida no card de linguagens (% aproximada; apague a linha para voltar ao cálculo automático)
+          LANGS: "Java:40,Groovy:25,JavaScript:20,PL/SQL:10,HTML:3,CSS:2"
           # GitLab opcional (Settings → Secrets and variables → Actions → Variables/Secrets)
           GITLAB_URL: ${{ vars.GITLAB_URL }}
           GITLAB_USER: ${{ vars.GITLAB_USER }}
