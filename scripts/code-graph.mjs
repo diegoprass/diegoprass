@@ -2,7 +2,15 @@
 // com uma linha de compilação passando por ele.
 // Uso no GitHub Actions: node scripts/code-graph.mjs  (precisa de GITHUB_TOKEN e GH_USER; REPOS opcional)
 // Teste local sem token: node scripts/code-graph.mjs --teste
-import { mkdirSync, writeFileSync } from "node:fs";
+//
+// GitLab (opcional): soma a atividade do GitLab na grade e no total.
+//   - Online (Actions): defina GITLAB_URL, GITLAB_USER e, se o perfil não for público, GITLAB_TOKEN (scope read_api).
+//   - Offline (GitLab só na rede interna): rode na sua máquina
+//       GITLAB_URL=https://gitlab.suaempresa.com.br GITLAB_USER=voce GITLAB_TOKEN=xxx node scripts/code-graph.mjs --exportar-gitlab
+//     e faça commit do arquivo data/gitlab-calendar.json (só datas e quantidades, nenhum código).
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+
+const GITLAB_FILE = "data/gitlab-calendar.json";
 
 const THEMES = {
   dark: {
@@ -19,7 +27,7 @@ const THEMES = {
 const LEVEL = { NONE: 0, FIRST_QUARTILE: 1, SECOND_QUARTILE: 2, THIRD_QUARTILE: 3, FOURTH_QUARTILE: 4 };
 const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
-export function render(weeks, total, user, t) {
+export function render(weeks, total, user, t, origem = "") {
   const CELL = 15, X0 = 58, Y0 = 92, nW = weeks.length;
   const W = X0 + nW * CELL + 30, H = Y0 + 7 * CELL + 78;
   const barW = gridR0() - 34 - 190;
@@ -95,7 +103,7 @@ ${cells}
   <text x="${34 + barW + 6}" y="${H - 44}"><tspan fill="${t.muted}">]</tspan></text>
   <text class="a" x="${34 + barW + 22}" y="${H - 44}" fill="${t.orange}">compilando...</text>
   <text class="b" x="${34 + barW + 22}" y="${H - 44}" fill="${t.accent}">✔ build ok</text>
-  <text x="22" y="${H - 18}"><tspan fill="${t.accent}">✔</tspan><tspan fill="${t.text}"> ${total} contribuições compiladas</tspan><tspan fill="${t.muted}"> · 0 erros · 0 warnings</tspan></text>
+  <text x="22" y="${H - 18}"><tspan fill="${t.accent}">✔</tspan><tspan fill="${t.text}"> ${total} contribuições compiladas</tspan><tspan fill="${t.muted}">${origem ? ` · ${esc(origem)}` : " · 0 erros · 0 warnings"}</tspan></text>
   <rect class="cur" x="${gridR - 8}" y="${H - 30}" width="8" height="15" fill="${t.text}"/>
 </g>
 </svg>`;
@@ -174,6 +182,55 @@ ${lang ? `<circle cx="25" cy="${H - 20}" r="5" fill="${lang.color || t.muted}"/>
 </svg>`;
 }
 
+// ---------------- GITLAB ----------------
+const dia = (d) => new Date(d).toLocaleDateString("sv-SE", { timeZone: process.env.TZ_PERFIL || "America/Sao_Paulo" });
+
+export async function fetchGitlab({ url, user, token, desde }) {
+  const base = url.replace(/\/+$/, "");
+  const cal = {};
+  if (token) {
+    // API de eventos: conta cada evento (push, MR, issue, comentário), como o calendário do GitLab
+    for (let page = 1; page <= 100; page++) {
+      const r = await fetch(`${base}/api/v4/users/${encodeURIComponent(user)}/events?after=${desde}&per_page=100&page=${page}`,
+        { headers: { "PRIVATE-TOKEN": token } });
+      if (!r.ok) throw new Error(`GitLab API ${r.status}: ${await r.text()}`);
+      const evs = await r.json();
+      for (const e of evs) { const k = dia(e.created_at); cal[k] = (cal[k] || 0) + 1; }
+      if (evs.length < 100) break;
+    }
+  } else {
+    // calendário público do perfil
+    const r = await fetch(`${base}/users/${encodeURIComponent(user)}/calendar.json`);
+    if (!r.ok) throw new Error(`GitLab calendar ${r.status}`);
+    Object.assign(cal, await r.json());
+  }
+  return cal;
+}
+
+async function gitlabCalendar(desde) {
+  const { GITLAB_URL: url, GITLAB_USER: user, GITLAB_TOKEN: token } = process.env;
+  if (url && user) {
+    try { return await fetchGitlab({ url, user, token, desde }); }
+    catch (e) { console.warn(`Aviso: GitLab online indisponível (${e.message}); tentando ${GITLAB_FILE}`); }
+  }
+  if (existsSync(GITLAB_FILE)) return JSON.parse(readFileSync(GITLAB_FILE, "utf8")).calendario || {};
+  return null;
+}
+
+function mesclar(weeks, extra) {
+  const all = weeks.flatMap((w) => w.contributionDays);
+  for (const d of all) d.contributionCount += extra[d.date] || 0;
+  const nz = all.map((d) => d.contributionCount).filter((c) => c > 0).sort((a, b) => a - b);
+  const q = (p) => nz[Math.min(nz.length - 1, Math.floor(p * nz.length))] ?? 0;
+  const [q1, q2, q3] = [q(0.25), q(0.5), q(0.75)];
+  for (const d of all) {
+    const c = d.contributionCount;
+    d.contributionLevel = c === 0 ? "NONE" : c <= q1 ? "FIRST_QUARTILE" : c <= q2 ? "SECOND_QUARTILE" : c <= q3 ? "THIRD_QUARTILE" : "FOURTH_QUARTILE";
+  }
+  const datas = new Set(all.map((d) => d.date));
+  return Object.entries(extra).reduce((a, [k, v]) => a + (datas.has(k) ? v : 0), 0);
+}
+
 async function main() {
   const user = process.env.GH_USER, token = process.env.GITHUB_TOKEN;
   const wanted = (process.env.REPOS || "").split(",").map((x) => x.trim()).filter(Boolean);
@@ -195,6 +252,15 @@ async function main() {
   if (!j.data?.user) throw new Error("Falha ao buscar dados: " + JSON.stringify(j));
   const u = j.data.user, cc = u.contributionsCollection, cal = cc.contributionCalendar, repos = u.repositories.nodes;
 
+  const primeiroDia = cal.weeks[0].contributionDays[0].date;
+  const gl = await gitlabCalendar(primeiroDia);
+  let total = cal.totalContributions, origem = "";
+  if (gl) {
+    const glTotal = mesclar(cal.weeks, gl);
+    origem = `github ${total} + gitlab ${glTotal}`;
+    total += glTotal;
+  }
+
   const langMap = {};
   const own = repos.filter((x) => !x.isFork);
   for (const rp of (own.length ? own : repos)) for (const e of rp.languages.edges) {
@@ -213,15 +279,25 @@ async function main() {
 
   mkdirSync("dist", { recursive: true });
   for (const [suf, t] of [["", THEMES.light], ["-dark", THEMES.dark]]) {
-    writeFileSync(`dist/code-contribution-graph${suf}.svg`, render(cal.weeks, cal.totalContributions, user, t));
+    writeFileSync(`dist/code-contribution-graph${suf}.svg`, render(cal.weeks, total, user, t, origem));
     writeFileSync(`dist/stats${suf}.svg`, statsCard(stats, t));
     writeFileSync(`dist/langs${suf}.svg`, langsCard(langs, t));
     chosen.forEach((rp, i) => writeFileSync(`dist/repo-${i + 1}${suf}.svg`, repoCard(rp, t)));
   }
-  console.log(`OK: ${cal.totalContributions} contribuições, ${chosen.length} projetos, ${langs.length} linguagens`);
+  console.log(`OK: ${total} contribuições (${origem || "só GitHub"}), ${chosen.length} projetos, ${langs.length} linguagens`);
 }
 
-if (process.argv[2] === "--teste") {
+if (process.argv[2] === "--exportar-gitlab") {
+  const { GITLAB_URL: url, GITLAB_USER: user, GITLAB_TOKEN: token } = process.env;
+  if (!url || !user) { console.error("Defina GITLAB_URL e GITLAB_USER (e GITLAB_TOKEN se o perfil não for público)."); process.exit(1); }
+  const desde = new Date(Date.now() - 372 * 864e5).toISOString().slice(0, 10);
+  fetchGitlab({ url, user, token, desde }).then((cal) => {
+    mkdirSync("data", { recursive: true });
+    writeFileSync(GITLAB_FILE, JSON.stringify({ origem: "gitlab", atualizado: new Date().toISOString(), calendario: cal }, null, 1));
+    const n = Object.values(cal).reduce((a, b) => a + b, 0);
+    console.log(`OK: ${n} contribuições do GitLab desde ${desde} salvas em ${GITLAB_FILE}. Agora faça commit e push desse arquivo.`);
+  }).catch((e) => { console.error(e.message); process.exit(1); });
+} else if (process.argv[2] === "--teste") {
   // dados falsos só para pré-visualizar
   const weeks = []; const start = Date.UTC(2025, 10, 16);
   const lv = ["NONE", "FIRST_QUARTILE", "SECOND_QUARTILE", "THIRD_QUARTILE", "FOURTH_QUARTILE"];

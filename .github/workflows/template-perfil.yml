@@ -27,6 +27,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
           REPOS: skills,Ia-coding-toolkit,framework-5p
+          # GitLab opcional (Settings → Secrets and variables → Actions → Variables/Secrets)
+          GITLAB_URL: ${{ vars.GITLAB_URL }}
+          GITLAB_USER: ${{ vars.GITLAB_USER }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
 
       - name: Publicar no branch output
         uses: crazy-max/ghaction-github-pages@v4
