@@ -23,7 +23,7 @@
 <div align="justify">
 
 Sou **Full Stack Developer** no **[Grupo Insoft4](https://www.insoft4.com.br)**, onde ajudo a construir o **[Ponto Soft](https://www.pontosoft.com.br)**, plataforma `SaaS B2B` de controle de ponto e gestão de jornada.
-No dia a dia trabalho com `Java`, `Grails`, `Ext JS`, `Oracle PL/SQL` e `JavaScript`, além de `Webflow`, `Figma` e integrações `RESTful` com CI/CD no GitLab.
+No dia a dia trabalho com `Java`, `Grails`, `Ext JS`, `React/React-Native`, `PL/SQL` e `JavaScript`, além de `Webflow`, `Figma` e integrações `RESTful` com CI/CD no GitLab.
 São **mais de 15 anos em tecnologia**: comecei no suporte e infraestrutura, passei por Oracle, Java, QA e front-end e, antes de voltar ao desenvolvimento, liderei o **marketing digital** da empresa (SEO, Google Ads, GTM, Analytics, automação de e-mail).
 Essa mistura me fez juntar código com **estratégia de produto e growth**. Hoje meu foco é levar **IA e LLMs** para dentro de produtos web, tema do meu **MBA em Tecnologia para Negócios: IA, Data Science e Big Data (PUCRS)**.
 
