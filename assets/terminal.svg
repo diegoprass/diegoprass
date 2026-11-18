@@ -22,7 +22,7 @@ text{font-family:'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace;f
 <text x="30" y="124" class="o" style="animation-delay:1.51s"><tspan fill="#c9d1d9" font-size="26" font-weight="700">Diego Prass Cardoso</tspan></text>
 <text x="30" y="158" class="o" style="animation-delay:1.76s"><tspan fill="#39d353">diego@github</tspan><tspan fill="#8b949e">:</tspan><tspan fill="#58a6ff">~</tspan><tspan fill="#8b949e">$ </tspan><tspan fill="#c9d1d9">cat foco.txt</tspan></text>
 <rect x="193.2" y="142" width="126" height="22" fill="#0d1117" class="tp" style="--w:126px;animation:tp 0.72s steps(12) 2.06s forwards"/>
-<text x="30" y="186" class="o" style="animation-delay:3.13s"><tspan fill="#d2a8ff">SaaS B2B</tspan><tspan fill="#8b949e">  &amp;&amp;  </tspan><tspan fill="#ffa657">Java · Grails · Oracle</tspan><tspan fill="#8b949e">  &amp;&amp;  </tspan><tspan fill="#79c0ff">IA</tspan></text>
+<text x="30" y="186" class="o" style="animation-delay:3.13s"><tspan fill="#d2a8ff">SaaS B2B</tspan><tspan fill="#8b949e">  &amp;&amp;  </tspan><tspan fill="#ffa657">Grails · React · React-Native · Java</tspan><tspan fill="#8b949e">  &amp;&amp;  </tspan><tspan fill="#79c0ff">IA</tspan></text>
 <text x="30" y="214" class="o" style="animation-delay:3.38s"><tspan fill="#39d353">diego@github</tspan><tspan fill="#8b949e">:</tspan><tspan fill="#58a6ff">~</tspan><tspan fill="#8b949e">$ </tspan><tspan fill="#c9d1d9">echo $LOCALIZACAO</tspan></text>
 <rect x="193.2" y="198" width="177" height="22" fill="#0d1117" class="tp" style="--w:177px;animation:tp 1.02s steps(17) 3.68s forwards"/>
 <text x="30" y="242" class="o" style="animation-delay:5.05s"><tspan fill="#a5d6ff">Taquara, RS — Brasil</tspan></text>
